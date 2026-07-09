@@ -1,0 +1,52 @@
+---
+// src/components/TarjetaProducto.astro
+const { nombre, categoria, precio, imagen, descripcion, slug, whatsappUrl } = Astro.props;
+---
+
+<div class="border border-gray-200/70 rounded-xl overflow-hidden bg-white shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow duration-300">
+  <div>
+    <!-- Contenedor de la Imagen con enlace a la página interna -->
+    <a href={`/productos/${slug}`} class="block aspect-square bg-gray-50 relative overflow-hidden group">
+      <img 
+        src={imagen} 
+        alt={nombre} 
+        class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
+        loading="lazy"
+      />
+      <!-- Etiqueta con el fondo Morado YDATECH -->
+      <span class="absolute top-3 left-3 bg-[#5c3aff] text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider shadow-sm">
+        {categoria}
+      </span>
+    </a>
+
+    <!-- Datos del producto -->
+    <div class="p-4">
+      <a href={`/productos/${slug}`} class="block group">
+        <h3 class="text-base font-bold text-gray-900 line-clamp-1 group-hover:text-[#5c3aff] transition-colors">{nombre}</h3>
+      </a>
+      <!-- Descripción Corta -->
+      <p class="mt-1 text-xs text-gray-500 line-clamp-2 h-8">{descripcion}</p>
+    </div>
+  </div>
+  
+  <!-- Precios y Botón de Acción Directo -->
+  <div class="p-4 pt-0">
+    <div class="flex items-center justify-between border-t border-gray-100 pt-3 my-3">
+      <span class="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Precio Ref.</span>
+      <span class="text-lg font-black text-gray-900">${precio.toFixed(2)}</span>
+    </div>
+    
+    <!-- Enlace Móvil Responsivo hacia WhatsApp -->
+    <a
+      href={whatsappUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="w-full flex items-center justify-center gap-2 bg-[#5c3aff] hover:bg-[#4b2ee0] text-white font-semibold text-xs py-3 px-4 rounded-lg transition-colors shadow-sm active:scale-[0.98]"
+    >
+      <svg xmlns="http://w3.org" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M8 15c4.418 0 8-3.134 8-7s-3.582-7-8-7-8 3.134-8 7c0 1.76.743 3.37 1.97 4.6-.097.382-.41 1.43-.544 1.88-.13.432.189.456.408.345 1.154-.585 2.138-.434 2.138-.434A7.5 7.5 0 0 0 8 15"/>
+      </svg>
+      Consultar Agente
+    </a>
+  </div>
+</div>

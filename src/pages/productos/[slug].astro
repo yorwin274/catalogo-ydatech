@@ -1,0 +1,164 @@
+---
+// src/pages/productos/[slug].astro
+import productos from '../../data/productos.json';
+
+// Generar las rutas estáticas para los 11 productos en tiempo de compilación
+export async function getStaticPaths() {
+  return productos.map((producto) => ({
+    params: { slug: producto.slug },
+    props: { producto },
+  }));
+}
+
+const { producto } = Astro.props;
+---
+
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=device-width" />
+    <title>{producto.nombre} | YDATECH</title>
+  </head>
+  <body class="bg-gray-50 min-h-screen text-gray-900 font-sans antialiased">
+    
+    <!-- Navbar Superior Fijo -->
+    <nav class="bg-white border-b border-gray-100 sticky top-0 z-50 shadow-sm">
+      <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between sm:px-6 lg:px-8">
+        <a href="/" class="flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-[#5c3aff] transition-colors">
+          <svg xmlns="http://w3.org" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+          </svg>
+          Volver al Catálogo
+        </a>
+        <img src="/logo.png" alt="YDATECH" class="h-8 w-auto object-contain" />
+      </div>
+    </nav>
+
+    <!-- Contenedor del Producto -->
+    <main class="max-w-6xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 bg-white p-4 sm:p-8 rounded-2xl border border-gray-200/60 shadow-sm">
+        
+        <!-- COLUMNA IZQUIERDA: Imagen con Contenedor de Zoom Dinámico -->
+        <div class="flex flex-col items-center">
+          <div 
+            id="zoom-container" 
+            class="w-full aspect-square bg-gray-50 border border-gray-100 rounded-xl relative overflow-hidden cursor-zoom-in group"
+          >
+            <img 
+              id="product-image"
+              src={producto.imagen} 
+              alt={producto.nombre} 
+              class="w-full h-full object-cover object-center origin-center transition-transform duration-75 select-none pointer-events-none"
+            />
+            
+            <!-- Indicador sutil de Zoom en Móviles -->
+            <span class="absolute bottom-3 right-3 bg-gray-900/70 backdrop-blur-sm text-white text-[10px] font-medium px-2.5 py-1 rounded-full pointer-events-none md:group-hover:opacity-0 transition-opacity">
+              Mueve para ampliar zoom
+            </span>
+          </div>
+        </div>
+
+        <!-- COLUMNA DERECHA: Detalles del Accesorio -->
+        <div class="flex flex-col justify-between pt-4 md:pt-0">
+          <div>
+            <!-- Categoría -->
+            <span class="inline-block bg-indigo-50 text-[#5c3aff] text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider mb-3">
+              {producto.categoria}
+            </span>
+            
+            <!-- Nombre del Producto -->
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-950 tracking-tight leading-none mb-2">
+              {producto.nombre}
+            </h1>
+            
+            <!-- Precio Ref -->
+            <div class="flex items-baseline gap-2 my-4">
+              <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Precio Sugerido:</span>
+              <span class="text-3xl font-black text-gray-950">${producto.precio.toFixed(2)}</span>
+            </div>
+
+            <!-- Ficha Técnica / Detalles -->
+            <div class="border-t border-gray-100 pt-5 mt-5">
+              <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Descripción Detallada:</h2>
+              <p class="text-sm text-gray-600 leading-relaxed font-medium">
+                {producto.detalles}
+              </p>
+            </div>
+          </div>
+
+          <!-- Botonera de Compra Responsiva adaptada a móviles -->
+          <div class="border-t border-gray-100 pt-6 mt-8 sm:mt-12">
+            <a
+              href={producto.whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="w-full flex items-center justify-center gap-3 bg-[#5c3aff] hover:bg-[#4b2ee0] text-white font-bold text-sm py-3.5 px-6 rounded-xl transition-all shadow-md shadow-indigo-100 active:scale-[0.98]"
+            >
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 15c4.418 0 8-3.134 8-7s-3.582-7-8-7-8 3.134-8 7c0 1.76.743 3.37 1.97 4.6-.097.382-.41 1.43-.544 1.88-.13.432.189.456.408.345 1.154-.585 2.138-.434 2.138-.434A7.5 7.5 0 0 0 8 15"/>
+              </svg>
+              Consultar Disponibilidad con Agente
+            </a>
+            <p class="text-[10px] text-center text-gray-400 mt-2 font-medium">
+              Al presionar, se abrirá un chat directo con los datos de este accesorio.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- Footer Corporativo -->
+    <footer class="bg-white border-t border-gray-100 mt-20">
+      <div class="max-w-7xl mx-auto px-4 py-6 text-center text-xs text-gray-400">
+        &copy; {new Date().getFullYear()} <strong>YDATECH</strong> - Servicio de Tecnología Móvil. Tienda 100% Online.
+      </div>
+    </footer>
+
+    <!-- CSS de Tailwind Global -->
+    <style is:global>
+      @import "tailwindcss";
+    </style>
+
+    <!-- Script de Zoom Táctil y de Mouse para las imágenes -->
+    <script is:inline>
+      const container = document.getElementById('zoom-container');
+      const img = document.getElementById('product-image');
+
+      if (container && img) {
+        // Función unificada para calcular la posición de ampliación
+        const handleZoom = (clientX, clientY) => {
+          const rect = container.getBoundingClientRect();
+          // Obtener posición relativa del puntero o dedo dentro del cuadro (0 a 1)
+          const x = (clientX - rect.left) / rect.width;
+          const y = (clientY - rect.top) / rect.height;
+          
+          // Aplicar escala de 2x y mover el punto de origen proporcionalmente
+          img.style.transformOrigin = `${x * 100}% ${y * 100}%`;
+          img.style.transform = 'scale(2)';
+        };
+
+        const resetZoom = () => {
+          img.style.transform = 'scale(1)';
+          img.style.transformOrigin = 'center center';
+        };
+
+        // --- Eventos para Computadoras (Mouse) ---
+        container.addEventListener('mousemove', (e) => handleZoom(e.clientX, e.clientY));
+        container.addEventListener('mouseleave', resetZoom);
+
+        // --- Eventos para Pantallas Táctiles Móviles ---
+        container.addEventListener('touchmove', (e) => {
+          if (e.touches.length === 1) {
+            // Evitar que el teléfono haga scroll vertical mientras se inspecciona la foto
+            e.preventDefault(); 
+            handleZoom(e.touches[0].clientX, e.touches[0].clientY);
+          }
+        }, { passive: false });
+
+        container.addEventListener('touchend', resetZoom);
+      }
+    </script>
+  </body>
+</html>

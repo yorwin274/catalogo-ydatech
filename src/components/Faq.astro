@@ -1,0 +1,44 @@
+---
+// src/components/Faq.astro
+---
+<section class="mt-24 max-w-3xl mx-auto">
+  <div class="text-center mb-8">
+    <h2 class="text-2xl font-bold text-gray-950 tracking-tight">Preguntas Frecuentes</h2>
+    <p class="text-xs text-gray-500 mt-1">Todo lo que necesitas saber antes de coordinar tu compra online.</p>
+  </div>
+
+  <div class="space-y-4">
+    <!-- Pregunta 1 -->
+    <details class="group bg-white border border-gray-200/80 rounded-xl p-4 cursor-pointer transition-all hover:border-gray-300">
+      <summary class="flex items-center justify-between font-semibold text-sm text-gray-900 list-none [&::-webkit-details-marker]:hidden">
+        <span>¿Cuáles son los métodos de pago disponibles?</span>
+        <span class="transition group-open:rotate-180 text-gray-400 text-xs">▼</span>
+      </summary>
+      <p class="mt-3 text-xs text-gray-600 leading-relaxed pl-1 border-t border-gray-50 pt-2">
+        Aceptamos transferencias y Pago Móvil en bolívares, divisas en efectivo para entregas acordadas y métodos electrónicos internacionales como Zelle. Consulta los datos de cuenta vigentes con el agente al momento de coordinar tu pedido.
+      </p>
+    </details>
+
+    <!-- Pregunta 2 -->
+    <details class="group bg-white border border-gray-200/80 rounded-xl p-4 cursor-pointer transition-all hover:border-gray-300">
+      <summary class="flex items-center justify-between font-semibold text-sm text-gray-900 list-none [&::-webkit-details-marker]:hidden">
+        <span>¿Cómo se realizan las entregas de los productos?</span>
+        <span class="transition group-open:rotate-180 text-gray-400 text-xs">▼</span>
+      </summary>
+      <p class="mt-3 text-xs text-gray-600 leading-relaxed pl-1 border-t border-gray-50 pt-2">
+        Al operar como tienda 100% en línea, coordinamos puntos de entrega específicos, céntricos y seguros con cada cliente. También gestionamos despachos mediante delivery motorizado en las zonas urbanas principales.
+      </p>
+    </details>
+
+    <!-- Pregunta 3 -->
+    <details class="group bg-white border border-gray-200/80 rounded-xl p-4 cursor-pointer transition-all hover:border-gray-300">
+      <summary class="flex items-center justify-between font-semibold text-sm text-gray-900 list-none [&::-webkit-details-marker]:hidden">
+        <span>¿Realizan envíos al interior del país?</span>
+        <span class="transition group-open:rotate-180 text-gray-400 text-xs">▼</span>
+      </summary>
+      <p class="mt-3 text-xs text-gray-600 leading-relaxed pl-1 border-t border-gray-50 pt-2">
+        Sí, realizamos envíos a nivel nacional a través de las principales agencias de encomienda de Venezuela (MRW, Zoom, Tealca) bajo la modalidad de Cobro en Destino (COD). Tu accesorio viaja perfectamente embalado y protegido.
+      </p>
+    </details>
+  </div>
+</section>

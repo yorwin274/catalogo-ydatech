@@ -1,0 +1,127 @@
+---
+// src/pages/index.astro
+import productos from '../data/productos.json';
+import TarjetaProducto from '../components/TarjetaProducto.astro';
+import Faq from '../components/Faq.astro';
+
+// Extraemos las categorías de forma dinámica
+const categorias = [...new Set(productos.map(p => p.categoria))];
+---
+
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <title>YDATECH | Catálogo Oficial</title>
+  </head>
+  <body class="bg-gray-50 min-h-screen text-gray-900 font-sans antialiased">
+    
+    <!-- Header Principal -->
+    <header class="bg-white border-b border-gray-100 shadow-sm">
+      <div class="max-w-7xl mx-auto px-4 py-10 text-center sm:px-6 lg:px-8">
+        <div class="flex justify-center mb-6">
+          <img src="/logo.png" alt="YDATECH Logo" class="h-16 w-auto object-contain" />
+        </div>
+        <p class="mt-3 max-w-xl mx-auto text-sm text-gray-500 font-medium">
+          Explora nuestra variedad en audio y sistemas de carga para tus dispositivos móviles. Consulta disponibilidad y coordina tu pedido directamente con un agente autorizado.
+        </p>
+
+        <!-- Barra de Búsqueda -->
+        <div class="mt-8 max-w-md mx-auto">
+          <div class="relative rounded-md shadow-sm">
+            <input 
+              type="text" 
+              id="buscador" 
+              placeholder="Buscar accesorio (ej. AirPods, Samsung, 35W...)" 
+              class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#00d2ff] focus:border-[#00d2ff] bg-gray-50 placeholder-gray-400 transition-colors"
+            />
+          </div>
+        </div>
+
+        <!-- Filtros Rápidos -->
+        <div class="mt-6 flex flex-wrap gap-2 justify-center">
+          <button data-filter="todos" class="btn-filtro px-4 py-1.5 rounded-full text-xs font-semibold bg-[#5c3aff] text-white transition-all shadow-sm shadow-indigo-100">
+            Todos
+          </button>
+          {categorias.map(categoria => (
+            <button data-filter={categoria} class="btn-filtro px-4 py-1.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all">
+              {categoria}
+            </button>
+          ))}
+        </div>
+      </div>
+    </header>
+
+    <!-- Contenido del Catálogo -->
+    <main class="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
+      {categorias.map(categoria => (
+        <section class="mb-16 last:mb-0 bloque-categoria" data-categoria={categoria}>
+          <div class="flex items-center gap-4 mb-6 border-b border-gray-200 pb-4">
+            <h2 class="text-2xl font-bold text-[#5c3aff] tracking-tight">{categoria}</h2>
+            <span class="bg-indigo-50 text-indigo-600 text-xs font-semibold px-2.5 py-1 rounded-full">
+              {productos.filter(p => p.categoria === categoria).length} ítems
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {productos
+              .filter(p => p.categoria === categoria)
+              .map(producto => (
+                <div class="tarjeta-contenedor" data-nombre={producto.nombre.toLowerCase()} data-cat={producto.categoria}>
+                  <TarjetaProducto {...producto} />
+                </div>
+              ))
+            }
+          </div>
+        </section>
+      ))}
+
+      <div id="sin-resultados" class="hidden text-center py-12">
+        <p class="text-gray-400 font-medium text-sm">No encontramos ningún accesorio que coincida con tu búsqueda.</p>
+      </div>
+
+      <!-- Componente Modular de FAQ -->
+      <Faq />
+    </main>
+
+    <!-- Secciones Informativas -->
+    <section class="bg-white border-t border-b border-gray-100 py-12 mt-20">
+      <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8 sm:px-6 lg:px-8 text-sm text-gray-600">
+        <div>
+          <h3 class="font-bold text-gray-950 text-base mb-3 flex items-center gap-2"><span class="text-[#5c3aff]">●</span> Síguenos en Redes</h3>
+          <p class="mb-4 text-xs">Próximamente compartiremos nuestros perfiles oficiales de Instagram y TikTok aquí.</p>
+          <span class="inline-flex gap-2 text-gray-400 text-xs italic">[Enlaces en mantenimiento]</span>
+        </div>
+        <div>
+          <h3 class="font-bold text-gray-950 text-base mb-3 flex items-center gap-2"><span class="text-[#5c3aff]">●</span> Envíos y Despachos</h3>
+          <ul class="space-y-2 text-xs list-disc pl-4">
+            <li><strong>Entregas Acordadas:</strong> Punto de encuentro rápido y seguro.</li>
+            <li><strong>Envíos Nacionales:</strong> Encomiendas a nivel nacional (Cobro en Destino).</li>
+            <li><strong>Calidad Garantizada:</strong> Artículos verificados antes de ser despachados.</li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="font-bold text-gray-950 text-base mb-3 flex items-center gap-2"><span class="text-[#5c3aff]">●</span> Compra Segura por Internet</h3>
+          <p class="text-xs leading-relaxed mb-3">Operamos exclusivamente como tienda en línea. Revisa nuestro catálogo digital, selecciona lo que necesitas y realiza tu compra cómodamente.</p>
+          <span class="inline-block bg-emerald-50 text-emerald-700 text-[11px] font-bold px-2.5 py-1 rounded-md">Asesoría Activa por WhatsApp</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-100 mt-10">
+      <div class="max-w-7xl mx-auto px-4 py-6 text-center text-xs text-gray-400">
+        &copy; {new Date().getFullYear()} <strong>YDATECH</strong> - Servicio de Tecnología Móvil. Precios sugeridos de referencia.
+      </div>
+    </footer>
+
+    <style is:global>
+      @import "tailwindcss";
+    </style>
+
+    <!-- Importación limpia del script modular por Vite -->
+    <script src="../scripts/main.js"></script>
+  </body>
+</html>
