@@ -1,0 +1,47 @@
+---
+// src/components/FilaAdmin.astro
+const { id, nombre, precio, stock, categoria, slug, imagen } = Astro.props;
+---
+
+<div class="p-4 sm:p-5 flex items-center justify-between gap-4 bg-white hover:bg-gray-50/50 transition-colors">
+  
+  <!-- Lado Izquierdo: Info básica visual -->
+  <div class="flex items-center gap-4 min-w-0">
+    <img src={imagen || '/placeholder.png'} alt={nombre} class="w-12 h-12 rounded-xl object-cover border border-gray-100 flex-shrink-0" />
+    <div class="min-w-0">
+      <h3 class="text-xs font-bold text-gray-950 truncate max-w-[200px] sm:max-w-xs">{nombre}</h3>
+      <div class="flex items-center gap-2 mt-1">
+        <span class="text-[9px] bg-gray-100 text-gray-500 font-bold px-1.5 py-0.5 rounded-md uppercase">{categoria}</span>
+        <span class="text-[10px] text-gray-400 font-medium">Stock: <strong class="text-gray-700">{stock}</strong></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lado Derecho: Precio y Acciones -->
+  <div class="flex items-center gap-3 sm:gap-6 flex-shrink-0">
+    <div class="text-right hidden xs:block">
+      <span class="text-[9px] block font-bold text-gray-400 uppercase tracking-wider">Precio</span>
+      <span class="text-xs font-black text-gray-950">${precio.toFixed(2)}</span>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <!-- 🚀 Editar -->
+      <a 
+        href={`/admin/editar?id=${id}`} 
+        class="bg-indigo-50 hover:bg-indigo-100 text-[#5c3aff] font-bold text-[11px] px-3.5 py-2 rounded-xl transition-all border border-indigo-100/50"
+      >
+        ✏️ Editar
+      </a>
+
+      <!-- 🗑️ Borrar (Nuevo botón con clase para el script) -->
+      <button 
+        class="btn-eliminar bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-[11px] px-3.5 py-2 rounded-xl transition-all border border-rose-100/50 cursor-pointer"
+        data-id={id}
+        data-nombre={nombre}
+      >
+        🗑️
+      </button>
+    </div>
+  </div>
+
+</div>

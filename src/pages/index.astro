@@ -1,24 +1,59 @@
 ---
 // src/pages/index.astro
-import productos from '../data/productos.json';
+export const prerender = false; // Fuerza el renderizado en tiempo real en el servidor
+
+import { supabase } from '../lib/supabase.js';
 import TarjetaProducto from '../components/TarjetaProducto.astro';
 import Faq from '../components/Faq.astro';
 
-// Extraemos las categorías de forma dinámica
-const categorias = [...new Set(productos.map(p => p.categoria))];
+// Declaramos las variables de control de la tienda
+let productos = [];
+let categorias = [];
+let tasaEuro = 46.50; // Valor de respaldo por pura seguridad técnica
+
+try {
+  // 🚀 CONSULTA REAL: Traemos la tasa manual exacta que tú mismo controlas desde tu panel
+  const { data: config } = await supabase
+    .from('ajustes')
+    .select('tasa_euro')
+    .eq('id', 1)
+    .single();
+
+  if (config && config.tasa_euro) {
+    tasaEuro = config.tasa_euro;
+  }
+} catch (errTasa) {
+  console.error('Nota: Usando tasa de respaldo del Euro.', errTasa);
+}
+
+try {
+  // Congelamos el renderizado seguro hasta que Supabase entregue las filas completas
+  const { data, error } = await supabase
+    .from('productos')
+    .select('*')
+    .order('id', { ascending: true });
+
+  if (error) {
+    console.error('Error directo de Supabase:', error.message);
+  } else if (data && data.length > 0) {
+    productos = data;
+    categorias = [...new Set(productos.map(p => p.categoria))];
+  }
+} catch (err) {
+  console.error('Error crítico en la petición de red de Supabase:', err);
+}
 ---
 
 <html lang="es">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width" />
-    <meta name="generator" content={Astro.generator} />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>YDATECH | Catálogo Oficial</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
   </head>
   <body class="bg-gray-50 min-h-screen text-gray-900 font-sans antialiased">
     
-    <!-- Header Principal -->
+    <!-- Header Principal con Identidad de Marca YDATECH -->
     <header class="bg-white border-b border-gray-100 shadow-sm">
       <div class="max-w-7xl mx-auto px-4 py-10 text-center sm:px-6 lg:px-8">
         <div class="flex justify-center mb-6">
@@ -28,8 +63,14 @@ const categorias = [...new Set(productos.map(p => p.categoria))];
           Explora nuestra variedad en audio y sistemas de carga para tus dispositivos móviles. Consulta disponibilidad y coordina tu pedido directamente con un agente autorizado.
         </p>
 
+        <!-- 🚀 BARRA DE TASA REAL: Muestra en la cabecera el Euro exacto de tu panel -->
+        <div class="mt-4 inline-flex items-center gap-1.5 bg-gray-50 border border-gray-100 rounded-full px-3 py-1 text-[10px] text-gray-500 font-bold tracking-wide shadow-2xs">
+          <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+          Tasa Oficial BCV: <span class="text-[#5c3aff] font-black">€1 = Bs. {tasaEuro.toFixed(2)}</span>
+        </div>
+
         <!-- Barra de Búsqueda -->
-        <div class="mt-8 max-w-md mx-auto">
+        <div class="mt-6 max-w-md mx-auto">
           <div class="relative rounded-md shadow-sm">
             <input 
               type="text" 
@@ -50,63 +91,107 @@ const categorias = [...new Set(productos.map(p => p.categoria))];
               {categoria}
             </button>
           ))}
+          <!-- Botones de marcas rápidas mapeados al script -->
+          <button data-filter="Apple" class="btn-filtro px-4 py-1.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all">🍏 Apple</button>
+          <button data-filter="Samsung" class="btn-filtro px-4 py-1.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all">📱 Samsung</button>
+          <button data-filter="JBL" class="btn-filtro px-4 py-1.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all">🔊 JBL</button>
         </div>
       </div>
     </header>
-
-    <!-- Contenido del Catálogo -->
+    <!-- Contenido del Catálogo Conectado a la Nube -->
     <main class="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
-      {categorias.map(categoria => (
-        <section class="mb-16 last:mb-0 bloque-categoria" data-categoria={categoria}>
-          <div class="flex items-center gap-4 mb-6 border-b border-gray-200 pb-4">
-            <h2 class="text-2xl font-bold text-[#5c3aff] tracking-tight">{categoria}</h2>
-            <span class="bg-indigo-50 text-indigo-600 text-xs font-semibold px-2.5 py-1 rounded-full">
-              {productos.filter(p => p.categoria === categoria).length} ítems
-            </span>
-          </div>
+      
+      {productos.length > 0 ? (
+        categorias.map(categoria => (
+          <section class="mb-16 last:mb-0 bloque-categoria" data-categoria={categoria}>
+            <div class="flex items-center gap-4 mb-6 border-b border-gray-200 pb-4">
+              <h2 class="text-2xl font-bold text-[#5c3aff] tracking-tight">{categoria}</h2>
+              <span class="bg-indigo-50 text-indigo-600 text-xs font-semibold px-2.5 py-1 rounded-full">
+                {productos.filter(p => p.categoria === categoria).length} ítems
+              </span>
+            </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {productos
-              .filter(p => p.categoria === categoria)
-              .map(producto => (
-                <div class="tarjeta-contenedor" data-nombre={producto.nombre.toLowerCase()} data-cat={producto.categoria}>
-                  <TarjetaProducto {...producto} />
-                </div>
-              ))
-            }
-          </div>
-        </section>
-      ))}
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {productos
+                .filter(p => p.categoria === categoria)
+                .map(producto => (
+                  <div class="tarjeta-contenedor" data-nombre={producto.nombre.toLowerCase()} data-cat={producto.categoria}>
+                    <TarjetaProducto 
+                      nombre={producto.nombre}
+                      categoria={producto.categoria}
+                      precio={producto.precio}
+                      imagen={producto.imagen}
+                      descripcion={producto.descripcion}
+                      stock={producto.stock}
+                      slug={producto.slug}
+                    />
+                    
+                    {/* 🚀 MATEMÁTICAS EN CALIENTE BCV: Multiplica el precio en dólares por la tasa real de Supabase */}
+                    <div class="px-4 pb-4 -mt-2 bg-white rounded-b-2xl flex items-center justify-between border-x border-b border-gray-100/50">
+                      <span class="text-[9px] font-bold text-gray-400 uppercase">Ref. en Euros:</span>
+                      <span class="text-[11px] font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">
+                        Bs. {(producto.precio * tasaEuro).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              }
+            </div>
+          </section>
+        ))
+      ) : (
+        <div class="text-center py-24 bg-white rounded-2xl border border-gray-100 shadow-sm max-w-md mx-auto">
+          <div class="w-10 h-10 border-4 border-[#5c3aff] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p class="text-gray-500 font-semibold text-sm">Cargando catálogo desde la nube de YDATECH...</p>
+        </div>
+      )}
 
       <div id="sin-resultados" class="hidden text-center py-12">
         <p class="text-gray-400 font-medium text-sm">No encontramos ningún accesorio que coincida con tu búsqueda.</p>
       </div>
 
-      <!-- Componente Modular de FAQ -->
       <Faq />
     </main>
 
     <!-- Secciones Informativas -->
     <section class="bg-white border-t border-b border-gray-100 py-12 mt-20">
       <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8 sm:px-6 lg:px-8 text-sm text-gray-600">
+        
         <div>
           <h3 class="font-bold text-gray-950 text-base mb-3 flex items-center gap-2"><span class="text-[#5c3aff]">●</span> Síguenos en Redes</h3>
-          <p class="mb-4 text-xs">Próximamente compartiremos nuestros perfiles oficiales de Instagram y TikTok aquí.</p>
-          <span class="inline-flex gap-2 text-gray-400 text-xs italic">[Enlaces en mantenimiento]</span>
+          <p class="mb-5 text-xs text-gray-500 leading-relaxed">Mantente al tanto de nuestros nuevos ingresos y promociones en nuestras cuentas oficiales.</p>
+          <div class="flex flex-col gap-2.5 max-w-[180px]">
+            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 px-4 py-2.5 rounded-xl border border-gray-100 bg-gradient-to-r from-orange-50/20 via-red-50/20 to-pink-50/20 text-xs font-bold text-gray-700 transition-all shadow-2xs hover:scale-[1.02]">
+              <svg class="w-4 h-4 text-[#e6683c] flex-shrink-0" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.9 3.9 0 0 0-1.417.923A3.9 3.9 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.9 3.9 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.9 3.9 0 0 0-.923-1.417A3.9 3.9 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599s.453.546.598.92c.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.5 2.5 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.5 2.5 0 0 1-.92-.598 2.5 2.5 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233s.008-2.388.046-3.231c.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92.28-.28.546-.453.92-.598.282-.11.704-.24 1.485-.276.738-.034 1.024-.044 2.515-.045zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92m-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217m0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334"/>
+              </svg>
+              <span>Instagram</span>
+            </a>
+            <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 px-4 py-2.5 rounded-xl border border-gray-100 bg-blue-50/10 text-xs font-bold text-gray-700 transition-all shadow-2xs hover:scale-[1.02]">
+              <svg class="w-4 h-4 text-[#1877f2] flex-shrink-0" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951"/>
+              </svg>
+              <span>Facebook</span>
+            </a>
+          </div>
         </div>
+
         <div>
           <h3 class="font-bold text-gray-950 text-base mb-3 flex items-center gap-2"><span class="text-[#5c3aff]">●</span> Envíos y Despachos</h3>
-          <ul class="space-y-2 text-xs list-disc pl-4">
-            <li><strong>Entregas Acordadas:</strong> Punto de encuentro rápido y seguro.</li>
-            <li><strong>Envíos Nacionales:</strong> Encomiendas a nivel nacional (Cobro en Destino).</li>
-            <li><strong>Calidad Garantizada:</strong> Artículos verificados antes de ser despachados.</li>
+          <ul class="space-y-2 text-xs text-gray-500 list-disc pl-4">
+            <li><strong>Entregas Acordadas:</strong> Punto de encuentro rápido y seguro en la zona.</li>
+            <li><strong>Envíos Nacionales:</strong> Encomiendas por Zoom, MRW o Tealca.</li>
           </ul>
         </div>
+
         <div>
           <h3 class="font-bold text-gray-950 text-base mb-3 flex items-center gap-2"><span class="text-[#5c3aff]">●</span> Compra Segura por Internet</h3>
-          <p class="text-xs leading-relaxed mb-3">Operamos exclusivamente como tienda en línea. Revisa nuestro catálogo digital, selecciona lo que necesitas y realiza tu compra cómodamente.</p>
-          <span class="inline-block bg-emerald-50 text-emerald-700 text-[11px] font-bold px-2.5 py-1 rounded-md">Asesoría Activa por WhatsApp</span>
+          <p class="text-xs text-gray-500 leading-relaxed mb-3">Operamos exclusivamente como tienda en línea. Selecciona lo que necesitas y compra cómodamente.</p>
+          <a href="https://wa.me." target="_blank" rel="noopener noreferrer" class="inline-block bg-emerald-50 text-emerald-700 text-[11px] font-bold px-2.5 py-1.5 rounded-xl border border-emerald-100 hover:bg-emerald-100/60 transition-all shadow-2xs">
+            💬 Asesoría Activa por WhatsApp
+          </a>
         </div>
+
       </div>
     </section>
 
@@ -121,7 +206,6 @@ const categorias = [...new Set(productos.map(p => p.categoria))];
       @import "tailwindcss";
     </style>
 
-    <!-- Importación limpia del script modular por Vite -->
     <script src="../scripts/main.js"></script>
   </body>
 </html>

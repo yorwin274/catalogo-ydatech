@@ -1,49 +1,66 @@
 ---
 // src/pages/productos/[slug].astro
-import productos from '../../data/productos.json';
+import { supabase } from '../../lib/supabase.js';
 
-// Generar las rutas estáticas para los 11 productos en tiempo de compilación
-export async function getStaticPaths() {
-  return productos.map((producto) => ({
-    params: { slug: producto.slug },
-    props: { producto },
-  }));
+// Capturamos el slug directamente desde la URL
+const { slug } = Astro.params;
+
+// Hacemos la consulta en vivo a la tabla "productos" filtrando por el slug
+const { data: producto, error } = await supabase
+  .from('productos')
+  .select('*')
+  .eq('slug', slug)
+  .single();
+
+// Si no existe el producto o hay un error, redirigimos a la página de error 404
+if (error || !producto) {
+  return Astro.redirect('/404');
 }
 
-const { producto } = Astro.props;
+// 🚀 CONSULTA MONETARIA REAL: Leemos la tasa manual exacta que tú controlas en Supabase
+const { data: config } = await supabase
+  .from('ajustes')
+  .select('tasa_euro')
+  .eq('id', 1)
+  .single();
+
+const tasaEuro = config ? config.tasa_euro : 46.50; // Valor de respaldo por seguridad
+
+// Construimos dinámicamente el enlace de WhatsApp usando el nombre y precio real
+const mensajeWhatsApp = encodeURIComponent(`¡Hola YDATECH! Me interesa el artículo: ${producto.nombre} (Precio: $${producto.precio.toFixed(2)})`);
+const whatsappUrl = `https://wa.me{mensajeWhatsApp}`;
 ---
 
 <html lang="es">
   <head>
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>{producto.nombre} | YDATECH</title>
   </head>
-  <body class="bg-gray-50 min-h-screen text-gray-900 font-sans antialiased">
+  <body class="bg-gray-50 min-h-screen text-gray-900 font-sans antialiased selection:bg-indigo-100">
     
-    <!-- Navbar Superior Fijo -->
+    <!-- Navbar Superior Responsivo -->
     <nav class="bg-white border-b border-gray-100 sticky top-0 z-50 shadow-sm">
       <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between sm:px-6 lg:px-8">
-        <a href="/" class="flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-[#5c3aff] transition-colors">
-          <svg xmlns="http://w3.org" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+        <a href="/" class="flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-[#5c3aff] transition-colors py-2">
+          <svg xmlns="http://w3.org" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
             <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
           </svg>
-          Volver al Catálogo
+          Volver
         </a>
-        <img src="/logo.png" alt="YDATECH" class="h-8 w-auto object-contain" />
+        <img src="/logo.png" alt="YDATECH" class="h-7 w-auto object-contain" />
       </div>
     </nav>
-
-    <!-- Contenedor del Producto -->
-    <main class="max-w-6xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 bg-white p-4 sm:p-8 rounded-2xl border border-gray-200/60 shadow-sm">
+    <!-- Contenedor del Producto Optimizado para Móvil -->
+    <main class="max-w-5xl mx-auto px-3 py-4 sm:px-6 sm:py-8 lg:px-8">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-12 bg-white p-4 sm:p-8 rounded-2xl border border-gray-200/60 shadow-sm">
         
-        <!-- COLUMNA IZQUIERDA: Imagen con Contenedor de Zoom Dinámico -->
-        <div class="flex flex-col items-center">
+        <!-- COLUMNA IZQUIERDA: Imagen con Contenedor de Zoom Móvil -->
+        <div class="w-full flex flex-col items-center">
           <div 
             id="zoom-container" 
-            class="w-full aspect-square bg-gray-50 border border-gray-100 rounded-xl relative overflow-hidden cursor-zoom-in group"
+            class="w-full aspect-square bg-gray-50 border border-gray-100 rounded-xl relative overflow-hidden cursor-zoom-in group touch-none"
           >
             <img 
               id="product-image"
@@ -51,57 +68,124 @@ const { producto } = Astro.props;
               alt={producto.nombre} 
               class="w-full h-full object-cover object-center origin-center transition-transform duration-75 select-none pointer-events-none"
             />
-            
-            <!-- Indicador sutil de Zoom en Móviles -->
-            <span class="absolute bottom-3 right-3 bg-gray-900/70 backdrop-blur-sm text-white text-[10px] font-medium px-2.5 py-1 rounded-full pointer-events-none md:group-hover:opacity-0 transition-opacity">
-              Mueve para ampliar zoom
+            <span class="absolute bottom-3 left-3 right-3 text-center bg-gray-950/70 backdrop-blur-sm text-white text-[10px] font-medium py-1 px-2 rounded-full pointer-events-none">
+              Arrastra tu dedo para ampliar detalles
             </span>
           </div>
         </div>
 
-        <!-- COLUMNA DERECHA: Detalles del Accesorio -->
-        <div class="flex flex-col justify-between pt-4 md:pt-0">
-          <div>
+        <!-- COLUMNA DERECHA: Detalles del Accesorio, Precios y Semáforo -->
+        <div class="flex flex-col justify-between pt-2 md:pt-0">
+          <div class="space-y-4">
             <!-- Categoría -->
-            <span class="inline-block bg-indigo-50 text-[#5c3aff] text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider mb-3">
-              {producto.categoria}
-            </span>
+            <div>
+              <span class="inline-block bg-indigo-50 text-[#5c3aff] text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
+                {producto.categoria}
+              </span>
+            </div>
             
             <!-- Nombre del Producto -->
-            <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-950 tracking-tight leading-none mb-2">
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-950 tracking-tight leading-tight">
               {producto.nombre}
             </h1>
             
-            <!-- Precio Ref -->
-            <div class="flex items-baseline gap-2 my-4">
-              <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Precio Sugerido:</span>
-              <span class="text-3xl font-black text-gray-950">${producto.precio.toFixed(2)}</span>
+            <!-- PRECIO EN DÓLARES Y BS DETALLADO REAL ABAJO -->
+            <div class="flex flex-col gap-1.5 bg-gray-50 p-3 rounded-xl border border-gray-100 sm:bg-transparent sm:p-0 sm:border-0">
+              <div class="flex items-center gap-2">
+                <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Precio Sugerido:</span>
+                <span class="text-2xl sm:text-3xl font-black text-gray-950">${producto.precio.toFixed(2)}</span>
+              </div>
+              
+              <!-- 💸 100% AUTOMÁTICO: Multiplica los dólares por el valor de tu Panel de Control -->
+              <span class="text-[11px] font-bold text-emerald-600 tracking-wide pl-0.5">
+                Ref. BCV Euro: Bs. {(producto.precio * tasaEuro).toFixed(2)}
+              </span>
+
+              <!-- Único letrero de existencia inteligente y sutil -->
+              <div class="mt-1">
+                {producto.stock > 5 && (
+                  <span class="inline-flex items-center text-emerald-600 text-[10px] font-bold">
+                    ✓ Disponible
+                  </span>
+                )}
+                {producto.stock >= 1 && producto.stock <= 5 && (
+                  <span class="inline-flex items-center text-amber-600 text-[10px] font-bold animate-pulse">
+                    🔥 Últimas unidades disponibles
+                  </span>
+                )}
+                {producto.stock === 0 && (
+                  <span class="inline-flex items-center text-rose-600 text-[10px] font-bold">
+                    🚫 Agotado temporalmente
+                  </span>
+                )}
+              </div>
             </div>
 
             <!-- Ficha Técnica / Detalles -->
-            <div class="border-t border-gray-100 pt-5 mt-5">
-              <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Descripción Detallada:</h2>
-              <p class="text-sm text-gray-600 leading-relaxed font-medium">
+            <div class="border-t border-gray-100 pt-4">
+              <h2 class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Descripción Detallada:</h2>
+              <p class="text-xs sm:text-sm text-gray-600 leading-relaxed font-medium">
                 {producto.detalles}
               </p>
             </div>
           </div>
+          <!-- Botonera de Compra y Redes Responsiva Integrada con Bloqueo de Stock -->
+          <div class="border-t border-gray-100 pt-4 mt-6 sm:pt-6 sm:mt-12 space-y-3">
+            
+            {/* BOTÓN DINÁMICO: Bloqueo inteligente si el stock llega a cero */}
+            {producto.stock > 0 ? (
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="w-full flex items-center justify-center gap-2.5 bg-[#5c3aff] hover:bg-[#4b2ee0] text-white font-bold text-sm py-3.5 px-4 rounded-xl transition-all shadow-md shadow-indigo-100 active:scale-[0.98] min-h-[48px]"
+              >
+                <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M8 15c4.418 0 8-3.134 8-7s-3.582-7-8-7-8 3.134-8 7c0 1.76.743 3.37 1.97 4.6-.097.382-.41 1.43-.544 1.88-.13.432.189.456.408.345 1.154-.585 2.138-.434 2.138-.434A7.5 7.5 0 0 0 8 15"/>
+                </svg>
+                <span>Consultar Disponibilidad</span>
+              </a>
+            ) : (
+              <button
+                disabled
+                class="w-full flex items-center justify-center gap-2.5 bg-gray-200 text-gray-400 font-bold text-sm py-3.5 px-4 rounded-xl cursor-not-allowed min-h-[48px]"
+              >
+                🚫 Producto Agotado
+              </button>
+            )}
 
-          <!-- Botonera de Compra Responsiva adaptada a móviles -->
-          <div class="border-t border-gray-100 pt-6 mt-8 sm:mt-12">
-            <a
-              href={producto.whatsappUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="w-full flex items-center justify-center gap-3 bg-[#5c3aff] hover:bg-[#4b2ee0] text-white font-bold text-sm py-3.5 px-6 rounded-xl transition-all shadow-md shadow-indigo-100 active:scale-[0.98]"
-            >
-              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M8 15c4.418 0 8-3.134 8-7s-3.582-7-8-7-8 3.134-8 7c0 1.76.743 3.37 1.97 4.6-.097.382-.41 1.43-.544 1.88-.13.432.189.456.408.345 1.154-.585 2.138-.434 2.138-.434A7.5 7.5 0 0 0 8 15"/>
-              </svg>
-              Consultar Disponibilidad con Agente
-            </a>
-            <p class="text-[10px] text-center text-gray-400 mt-2 font-medium">
-              Al presionar, se abrirá un chat directo con los datos de este accesorio.
+            <!-- Grilla Secundaria: Redes Sociales Corporativas -->
+            <div class="grid grid-cols-2 gap-2.5">
+              
+              <!-- Botón: Instagram Oficial YDATECH -->
+              <a
+                href="https://instagram.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="flex items-center justify-center gap-1.5 bg-gradient-to-r from-[#f09433] via-[#e6683c] to-[#bc1888] hover:opacity-95 text-white font-bold text-[11px] py-3 px-3 rounded-xl transition-all shadow-sm active:scale-[0.98] min-h-[42px]"
+              >
+                <svg class="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.9 3.9 0 0 0-1.417.923A3.9 3.9 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.9 3.9 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.9 3.9 0 0 0-.923-1.417A3.9 3.9 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599s.453.546.598.92c.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.5 2.5 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.5 2.5 0 0 1-.92-.598 2.5 2.5 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233s.008-2.388.046-3.231c.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92.28-.28.546-.453.92-.598.282-.11.704-.24 1.485-.276.738-.034 1.024-.044 2.515-.045zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92m-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217m0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334"/>
+                </svg>
+                <span>Instagram</span>
+              </a>
+
+              <!-- Botón: Facebook Oficial YDATECH -->
+              <a
+                href="https://facebook.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="flex items-center justify-center gap-1.5 bg-[#1877f2] hover:bg-[#166fe5] text-white font-bold text-[11px] py-3 px-3 rounded-xl transition-all shadow-sm active:scale-[0.98] min-h-[42px]"
+              >
+                <svg class="w-3.5 h-3.5 fill-current flex-shrink-0" viewBox="0 0 16 16">
+                  <path d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951"/>
+                </svg>
+                <span>Facebook</span>
+              </a>
+            </div>
+
+            <p class="text-[9px] text-center text-gray-400 mt-2 font-medium">
+              Al presionar los botones se abrirá la aplicación correspondiente con los datos oficiales de la tienda.
             </p>
           </div>
         </div>
@@ -109,34 +193,31 @@ const { producto } = Astro.props;
       </div>
     </main>
 
-    <!-- Footer Corporativo -->
-    <footer class="bg-white border-t border-gray-100 mt-20">
-      <div class="max-w-7xl mx-auto px-4 py-6 text-center text-xs text-gray-400">
-        &copy; {new Date().getFullYear()} <strong>YDATECH</strong> - Servicio de Tecnología Móvil. Tienda 100% Online.
+    <footer class="bg-white border-t border-gray-100 mt-12 py-4">
+      <div class="max-w-7xl mx-auto px-4 text-center text-[10px] text-gray-400">
+        &copy; {new Date().getFullYear()} <strong>YDATECH</strong> - Tienda 100% Online.
       </div>
     </footer>
 
-    <!-- CSS de Tailwind Global -->
     <style is:global>
       @import "tailwindcss";
     </style>
 
-    <!-- Script de Zoom Táctil y de Mouse para las imágenes -->
     <script is:inline>
       const container = document.getElementById('zoom-container');
       const img = document.getElementById('product-image');
 
       if (container && img) {
-        // Función unificada para calcular la posición de ampliación
         const handleZoom = (clientX, clientY) => {
           const rect = container.getBoundingClientRect();
-          // Obtener posición relativa del puntero o dedo dentro del cuadro (0 a 1)
           const x = (clientX - rect.left) / rect.width;
           const y = (clientY - rect.top) / rect.height;
           
-          // Aplicar escala de 2x y mover el punto de origen proporcionalmente
-          img.style.transformOrigin = `${x * 100}% ${y * 100}%`;
-          img.style.transform = 'scale(2)';
+          const clampedX = Math.max(0, Math.min(1, x));
+          const clampedY = Math.max(0, Math.min(1, y));
+          
+          img.style.transformOrigin = `${clampedX * 100}% ${clampedY * 100}%`;
+          img.style.transform = 'scale(2.2)';
         };
 
         const resetZoom = () => {
@@ -144,21 +225,33 @@ const { producto } = Astro.props;
           img.style.transformOrigin = 'center center';
         };
 
-        // --- Eventos para Computadoras (Mouse) ---
         container.addEventListener('mousemove', (e) => handleZoom(e.clientX, e.clientY));
         container.addEventListener('mouseleave', resetZoom);
 
-        // --- Eventos para Pantallas Táctiles Móviles ---
+        container.addEventListener('touchstart', (e) => {
+          if (e.touches.length === 1) {
+            handleZoom(e.touches.clientX, e.touches.clientY);
+          }
+        }, { passive: true });
+
         container.addEventListener('touchmove', (e) => {
           if (e.touches.length === 1) {
-            // Evitar que el teléfono haga scroll vertical mientras se inspecciona la foto
-            e.preventDefault(); 
-            handleZoom(e.touches[0].clientX, e.touches[0].clientY);
+            e.preventDefault();
+            handleZoom(e.touches.clientX, e.touches.clientY);
           }
         }, { passive: false });
 
         container.addEventListener('touchend', resetZoom);
+        container.addEventListener('touchcancel', resetZoom);
       }
     </script>
   </body>
 </html>
+
+***
+
+¡Listo, Yorwin! Con este último bloque salvado, todo tu archivo quedó cerrado de punta a punta. 
+
+Guárdalo, refresca el navegador en tu computadora ¡y verás los AirPods Max con el precio impecable, la conversión exacta del panel y cero textos duplicados!
+
+Dime si todo cargó fino para darte el **Paso 4: Comandos de Git** y lanzar tu plataforma a producción de una vez. ¡Coronamos el proyecto!

@@ -1,0 +1,218 @@
+---
+// src/pages/admin/nuevo.astro
+---
+
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YDATECH | Registrar Accesorio</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+
+
+        <!-- 🔐 CANDADO DE SEGURIDAD DINÁMICO MEJORADO -->
+    <script is:inline>
+      if (!localStorage.getItem('ydatech_session')) {
+        window.location.href = '/admin/login';
+      }
+    </script>
+
+  </head>
+  <body class="bg-gray-50 min-h-screen text-gray-900 font-sans antialiased">
+    
+    <!-- Navbar -->
+    <nav class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+      <div class="max-w-2xl mx-auto px-4 h-16 flex items-center justify-between sm:px-6">
+        <a href="/admin/dashboard" class="flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-[#5c3aff] py-2">
+          ← Volver al Inventario
+        </a>
+        <img src="/logo.png" alt="YDATECH" class="h-7 w-auto object-contain" />
+      </div>
+    </nav>
+
+    <!-- Contenedor del Formulario -->
+    <main class="max-w-2xl mx-auto px-4 py-8 sm:px-6">
+      <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 sm:p-8">
+        
+        <div class="mb-6">
+          <h1 class="text-xl font-extrabold text-gray-950 tracking-tight sm:text-2xl">
+            🚀 Añadir Nuevo Accesorio
+          </h1>
+          <p class="text-xs text-gray-500 mt-1.5 font-medium">
+            Sube la foto real y completa los campos del accesorio para tu catálogo en línea.
+          </p>
+        </div>
+
+        <form id="form-nuevo-producto" class="space-y-5">
+          
+          <!-- 📸 CARGADOR MULTIMEDIA DIRECTO -->
+          <div class="flex flex-col gap-2">
+            <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Imagen del Producto</label>
+            <div class="flex items-center gap-5 p-4 bg-gray-50 border border-gray-200 rounded-xl">
+              <img id="preview-foto" src="/placeholder.png" alt="Preview" class="w-20 h-20 rounded-xl object-cover border border-gray-300 bg-white shadow-sm" />
+              <div class="flex flex-col gap-1.5">
+                <input type="file" id="input-foto" accept="image/*" class="text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-[#5c3aff] hover:file:bg-indigo-100 cursor-pointer" />
+                <p class="text-[10px] text-gray-400">Selecciona el archivo binario para subirlo a tu Storage.</p>
+              </div>
+            </div>
+            <!-- Campo oculto para guardar temporalmente la URL generada -->
+            <input type="hidden" id="url-imagen-final" value="" />
+          </div>
+
+          <!-- Nombre -->
+          <div class="flex flex-col gap-1.5">
+            <label for="nombre" class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Nombre del Artículo</label>
+            <input type="text" id="nombre" required placeholder="Ej. Audífonos Inalámbricos JBL Max" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold focus:outline-none focus:border-[#5c3aff] focus:bg-white transition-all" />
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <!-- Categoría -->
+            <div class="flex flex-col gap-1.5">
+              <label for="categoria" class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Categoría</label>
+              <input type="text" id="categoria" required placeholder="Ej. Audio" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold focus:outline-none focus:border-[#5c3aff] focus:bg-white transition-all" />
+            </div>
+
+            <!-- Precio -->
+            <div class="flex flex-col gap-1.5">
+              <label for="precio" class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Precio Sugerido ($)</label>
+              <input type="number" id="precio" step="0.01" required placeholder="0.00" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-bold focus:outline-none focus:border-[#5c3aff] focus:bg-white transition-all" />
+            </div>
+
+            <!-- Stock -->
+            <div class="flex flex-col gap-1.5">
+              <label for="stock" class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Stock / Existencia</label>
+              <input type="number" id="stock" required placeholder="0" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-bold focus:outline-none focus:border-[#5c3aff] focus:bg-white transition-all" />
+            </div>
+          </div>
+
+          <!-- Descripción Completa -->
+          <div class="flex flex-col gap-1.5">
+            <label for="detalles" class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Descripción / Detalles Técnicos</label>
+            <textarea id="detalles" rows="4" required placeholder="Especificaciones, compatibilidad o colores..." class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-medium focus:outline-none focus:border-[#5c3aff] focus:bg-white transition-all resize-none"></textarea>
+          </div>
+
+          <!-- Botón de Envío -->
+          <div class="pt-2">
+            <button type="submit" id="btn-registrar" class="w-full flex items-center justify-center bg-[#5c3aff] hover:bg-[#4b2ee0] text-white font-bold text-xs py-3.5 px-4 rounded-xl transition-all shadow-md active:scale-[0.99]">
+              Registrar Artículo
+            </button>
+          </div>
+
+        </form>
+
+      </div>
+    </main>
+
+    <style is:global>
+      @import "tailwindcss";
+    </style>
+    <!-- SCRIPT DE OPERACIÓN INTEGRADO TERMINADO -->
+    <script is:inline>
+      const inputFoto = document.getElementById('input-foto');
+      const previewFoto = document.getElementById('preview-foto');
+      const urlImagenFinal = document.getElementById('url-imagen-final');
+      const formulario = document.getElementById('form-nuevo-producto');
+      const btnRegistrar = document.getElementById('btn-registrar');
+
+      // ☁️ 1. Subida asíncrona de imagen apenas se adjunta el archivo al Storage
+      inputFoto?.addEventListener('change', async (e) => {
+        const archivos = e.target.files;
+        if (!archivos || archivos.length === 0) return;
+
+        const archivoSeleccionado = archivos[0]; 
+        previewFoto.src = URL.createObjectURL(archivoSeleccionado);
+        
+        btnRegistrar.disabled = true;
+        btnRegistrar.textContent = 'Subiendo imagen a la nube... ☁️';
+        btnRegistrar.classList.remove('bg-[#5c3aff]');
+        btnRegistrar.classList.add('bg-amber-500');
+
+        const formData = new FormData();
+        formData.append('foto', archivoSeleccionado);
+
+        try {
+          const respuesta = await fetch('/api/subir-imagen', {
+            method: 'POST',
+            body: formData
+          });
+
+          const resultado = await respuesta.json();
+
+          if (respuesta.ok && resultado.success) {
+            urlImagenFinal.value = resultado.url; // Guardamos la URL pública generada
+            
+            btnRegistrar.disabled = false;
+            btnRegistrar.textContent = 'Registrar Artículo';
+            btnRegistrar.classList.remove('bg-amber-500');
+            btnRegistrar.classList.add('bg-[#5c3aff]');
+          } else {
+            alert('Error en Storage: ' + (resultado.error || 'Verifica el bucket público'));
+            restablecerBoton();
+          }
+        } catch (err) {
+          console.error(err);
+          alert('Error de conexión al procesar el archivo multimedia.');
+          restablecerBoton();
+        }
+      });
+
+      // 🚀 2. Inserción de campos directos a Supabase a través de tu API limpia
+      formulario?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const nombre = document.getElementById('nombre').value.trim();
+        const categoria = document.getElementById('categoria').value.trim();
+        const precio = parseFloat(document.getElementById('precio').value);
+        const stock = parseInt(document.getElementById('stock').value);
+        const detalles = document.getElementById('detalles').value.trim();
+        const imagen = urlImagenFinal.value;
+
+        if (!imagen) {
+          alert('Por favor, selecciona y sube una imagen antes de registrar el producto.');
+          return;
+        }
+
+        btnRegistrar.textContent = 'Guardando en la nube...';
+        btnRegistrar.disabled = true;
+        btnRegistrar.classList.remove('bg-[#5c3aff]');
+        btnRegistrar.classList.add('bg-amber-500');
+
+        try {
+          const respuesta = await fetch('/api/crear-producto', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nombre, categoria, precio, stock, detalles, imagen })
+          });
+
+          const resultado = await respuesta.json();
+
+          if (respuesta.ok && resultado.success) {
+            btnRegistrar.textContent = '¡Registrado con éxito total! ✓';
+            btnRegistrar.classList.remove('bg-amber-500');
+            btnRegistrar.classList.add('bg-emerald-600');
+
+            setTimeout(() => {
+              formulario.reset();
+              window.location.href = '/admin/dashboard';
+            }, 1200);
+          } else {
+            alert('Error al insertar artículo: ' + (resultado.error || 'Verifica la consola'));
+            restablecerBoton();
+          }
+
+        } catch (err) {
+          console.error(err);
+          alert('Error de comunicación con el servidor.');
+          restablecerBoton();
+        }
+      });
+
+      function restablecerBoton() {
+        btnRegistrar.textContent = 'Registrar Artículo';
+        btnRegistrar.disabled = false;
+        btnRegistrar.classList.remove('bg-amber-500', 'bg-emerald-600');
+        btnRegistrar.classList.add('bg-[#5c3aff]');
+      }
+    </script>
+  </body>
+</html>

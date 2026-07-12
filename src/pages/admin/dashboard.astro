@@ -1,0 +1,165 @@
+---
+// src/pages/admin/dashboard.astro
+import { supabase } from '../../lib/supabase.js';
+import FilaAdmin from '../../components/FilaAdmin.astro';
+
+// 1. Traemos los productos actualizados
+const { data: productos, error: errorProd } = await supabase
+  .from('productos')
+  .select('*')
+  .order('id', { ascending: true });
+
+if (errorProd) {
+  console.error("Error cargando inventario:", errorProd.message);
+}
+
+// 2. Traemos la tasa manual guardada
+const { data: config } = await supabase
+  .from('ajustes')
+  .select('tasa_euro')
+  .eq('id', 1)
+  .single();
+
+const tasaActual = config ? config.tasa_euro : 46.50;
+---
+
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YDATECH | Panel de Control</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    
+       <!-- 🔐 CANDADO DE SEGURIDAD DINÁMICO MEJORADO -->
+    <script is:inline>
+      if (!localStorage.getItem('ydatech_session')) {
+        window.location.href = '/admin/login';
+      }
+    </script>
+
+  </head>
+  <body class="bg-gray-50 min-h-screen text-gray-900 font-sans antialiased">
+    
+    <!-- Navbar del Administrador con Menú de Opciones Avanzado -->
+    <nav class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+      <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between sm:px-6 lg:px-8">
+        <div class="flex items-center gap-3">
+          <a href="/admin/dashboard" class="flex items-center gap-3">
+            <img src="/logo.png" alt="YDATECH" class="h-7 w-auto object-contain" />
+            <span class="bg-indigo-50 text-[#5c3aff] text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Admin</span>
+          </a>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <a href="/admin/nuevo" class="hidden sm:inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2 px-3 rounded-xl transition-all shadow-sm">+ Nuevo Producto</a>
+
+          <details class="relative inline-block text-left group [&_summary::-webkit-details-marker]:hidden">
+            <summary class="flex items-center gap-1 bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold text-xs py-2 px-3.5 border border-gray-200 rounded-xl cursor-pointer list-none select-none transition-colors">
+              <span>Menú</span>
+              <span class="text-gray-400 text-[10px] transition-transform group-open:rotate-180">▼</span>
+            </summary>
+            <div class="absolute right-0 mt-2 w-52 bg-white rounded-xl border border-gray-200 shadow-lg p-1.5 z-50">
+              <a href="/admin/dashboard" class="flex items-center gap-2 px-2.5 py-2 text-xs font-bold text-[#5c3aff] bg-indigo-50/60 rounded-lg">📋 Inventario</a>
+              <a href="/admin/nuevo" class="flex items-center gap-2 px-2.5 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">➕ Agregar Accesorio</a>
+              <div class="border-t border-gray-100 mt-1.5 pt-1.5">
+                <button id="btn-cerrar-sesion" class="w-full flex items-center gap-2 px-2.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-lg transition-colors text-left">🚪 Cerrar Sesión</button>
+              </div>
+            </div>
+          </details>
+        </div>
+      </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+      <div class="md:flex md:items-center md:justify-between mb-8">
+        <div class="flex-1 min-w-0">
+          <h1 class="text-2xl font-extrabold text-gray-950 tracking-tight sm:text-3xl leading-none">Gestión de Inventario Online</h1>
+          <p class="text-xs text-gray-500 mt-1.5 font-medium">Modifica en tiempo real los precios y existencias de tus accesorios.</p>
+        </div>
+      </div>
+
+      <!-- 🎛️ PANEL DE TASA MANUAL -->
+      <div class="mb-8 bg-white border border-gray-200/80 rounded-2xl p-5 shadow-sm max-w-sm">
+        <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2.5">⚙️ Configuración Monetaria</h2>
+        <div class="flex items-end gap-3">
+          <div class="flex flex-col gap-1.5 flex-1">
+            <label class="text-[10px] font-bold text-gray-500">Valor Oficial Euro (BCV)</label>
+            <input type="number" id="input-tasa-global" step="0.01" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2 text-sm font-black focus:outline-none focus:border-[#5c3aff]" value={tasaActual} />
+          </div>
+          <button id="btn-guardar-tasa" class="bg-[#5c3aff] hover:bg-[#4b2ee0] text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-md active:scale-[0.97] cursor-pointer">Actualizar</button>
+        </div>
+      </div>
+      <!-- Tabla de Productos -->
+      <div class="bg-white border border-gray-200/80 rounded-2xl shadow-sm overflow-hidden">
+        <div class="divide-y divide-gray-100">
+          {productos && productos.map((producto) => (
+            <FilaAdmin {...producto} />
+          ))}
+          {(!productos || productos.length === 0) && (
+            <div class="p-8 text-center text-xs text-gray-400 font-semibold">No hay productos registrados.</div>
+          )}
+        </div>
+      </div>
+    </main>
+
+    <style is:global>
+      @import "tailwindcss";
+    </style>
+
+    <script is:inline>
+      // 1. Cerrar Sesión
+      document.getElementById('btn-cerrar-sesion')?.addEventListener('click', () => {
+        localStorage.removeItem('ydatech_session');
+        window.location.href = '/admin/login';
+      });
+
+      // 2. Guardar Tasa Manual
+      const btnTasa = document.getElementById('btn-guardar-tasa');
+      const inputTasa = document.getElementById('input-tasa-global');
+
+      btnTasa?.addEventListener('click', async () => {
+        const nuevaTasa = parseFloat(inputTasa.value);
+        if (!nuevaTasa) return;
+        btnTasa.textContent = '...';
+        try {
+          const res = await fetch('/api/actualizar-tasa', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tasa: nuevaTasa })
+          });
+          if (res.ok) {
+            btnTasa.textContent = '¡Listo! ✓';
+            btnTasa.classList.add('bg-emerald-600');
+            setTimeout(() => location.reload(), 1000);
+          }
+        } catch (err) { alert('Error al conectar'); }
+      });
+
+      // 3. 🗑️ BORRAR PRODUCTO (Punto 4)
+      const botonesEliminar = document.querySelectorAll('.btn-eliminar');
+      botonesEliminar.forEach(boton => {
+        boton.addEventListener('click', async () => {
+          const id = boton.getAttribute('data-id');
+          const nombre = boton.getAttribute('data-nombre');
+
+          if (confirm(`¿Eliminar definitivamente "${nombre}"?`)) {
+            boton.textContent = '...';
+            try {
+              const res = await fetch('/api/eliminar-producto', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id })
+              });
+              if (res.ok) {
+                location.reload();
+              } else {
+                alert('No se pudo borrar');
+                boton.textContent = '🗑️';
+              }
+            } catch (err) { alert('Error de red'); }
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

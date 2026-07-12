@@ -1,0 +1,141 @@
+---
+// src/pages/admin/login.astro
+---
+
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YDATECH | Panel de Acceso</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+  </head>
+  <body class="bg-gray-50 min-h-screen flex items-center justify-center p-4 font-sans antialiased">
+
+    <div class="w-full max-w-md bg-white p-6 sm:p-8 rounded-2xl border border-gray-200/70 shadow-md">
+      
+      <!-- Encabezado / Logo -->
+      <div class="text-center mb-8">
+        <div class="flex justify-center mb-4">
+          <img src="/logo.png" alt="YDATECH" class="h-10 w-auto object-contain" />
+        </div>
+        <h1 class="text-xl font-extrabold text-gray-950 tracking-tight">Control de Inventario</h1>
+        <p class="text-xs text-gray-400 mt-1">Ingresa tus credenciales para administrar el catálogo online.</p>
+      </div>
+
+      <!-- Formulario de Acceso -->
+      <form id="login-form" class="space-y-5">
+        <div>
+          <label for="username" class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Usuario</label>
+          <input 
+            type="text" 
+            id="username" 
+            required
+            placeholder="Introduce tu usuario" 
+            class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#00d2ff] focus:border-[#00d2ff] bg-gray-50 placeholder-gray-400 transition-colors"
+          />
+        </div>
+
+        <div>
+          <label for="password" class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Contraseña</label>
+          <input 
+            type="password" 
+            id="password" 
+            required
+            placeholder="••••••••" 
+            class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#00d2ff] focus:border-[#00d2ff] bg-gray-50 placeholder-gray-400 transition-colors"
+          />
+        </div>
+
+        <!-- Alerta de Error Oculta -->
+        <div id="error-alert" class="hidden bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium px-4 py-3 rounded-xl">
+          Credenciales incorrectas. Por favor, verifica e inténtalo de nuevo.
+        </div>
+
+        <button 
+          type="submit" 
+          class="w-full flex items-center justify-center bg-[#5c3aff] hover:bg-[#4b2ee0] text-white font-bold text-sm py-3.5 px-4 rounded-xl transition-all shadow-md shadow-indigo-100 active:scale-[0.98]"
+        >
+          Iniciar Sesión
+        </button>
+      </form>
+
+      <div class="mt-6 text-center">
+        <a href="/" class="text-xs font-bold text-gray-400 hover:text-[#5c3aff] transition-colors">
+          ← Volver a la Tienda Públicas
+        </a>
+      </div>
+
+    </div>
+
+    <!-- CSS Global de Tailwind v4 -->
+    <style is:global>
+      @import "tailwindcss";
+    </style>
+
+        <!-- Conector de Autenticación Dinámico Real -->
+    <script is:inline>
+      const form = document.getElementById('login-form');
+      const errorAlert = document.getElementById('error-alert');
+      const btnSubmit = form?.querySelector('button[type="submit"]');
+
+      form?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const usuarioInput = document.getElementById('username').value.trim();
+        const claveInput = document.getElementById('password').value;
+
+        // Ocultamos la alerta de errores previos
+        errorAlert?.classList.add('hidden');
+        
+        // Bloqueamos el botón temporalmente para dar retroalimentación visual
+        if (btnSubmit) {
+          btnSubmit.disabled = true;
+          btnSubmit.textContent = 'Verificando en Supabase... 🔒';
+        }
+
+        try {
+          // 🚀 ENVIAMOS LOS DATOS EN CALIENTE AL ENDPOINT
+          const respuesta = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ usuario: usuarioInput, password: claveInput })
+          });
+
+          const resultado = await respuesta.json();
+
+          if (respuesta.ok && resultado.success) {
+            // Guardamos el token dinámico de internet en la sesión temporal del navegador
+            localStorage.setItem('ydatech_session', resultado.token);
+            
+            if (btnSubmit) {
+              btnSubmit.textContent = '¡Acceso Concedido! Entrando... ✓';
+              btnSubmit.className = 'w-full flex items-center justify-center bg-emerald-600 text-white font-bold text-sm py-3.5 px-4 rounded-xl transition-all shadow-md';
+            }
+
+            // Redirigimos al inventario con la sesión activa
+            setTimeout(() => {
+              window.location.href = '/admin/dashboard';
+            }, 1000);
+          } else {
+            // Si la base de datos rechaza los datos, mostramos el cuadro rojo
+            errorAlert?.classList.remove('hidden');
+            restablecerBotonLogin();
+          }
+        } catch (err) {
+          console.error(err);
+          alert('Error de comunicación con los servicios de seguridad de YDATECH.');
+          restablecerBotonLogin();
+        }
+      });
+
+      function restablecerBotonLogin() {
+        if (btnSubmit) {
+          btnSubmit.disabled = false;
+          btnSubmit.textContent = 'Iniciar Sesión';
+          btnSubmit.className = 'w-full flex items-center justify-center bg-[#5c3aff] hover:bg-[#4b2ee0] text-white font-bold text-sm py-3.5 px-4 rounded-xl transition-all shadow-md shadow-indigo-100 active:scale-[0.98]';
+        }
+      }
+    </script>
+
+  </body>
+</html>

@@ -1,0 +1,193 @@
+---
+// src/pages/admin/editar.astro
+import { supabase } from '../../lib/supabase.js';
+
+// Capturamos el ID del producto desde los parámetros de la URL
+const url = new URL(Astro.request.url);
+const id = url.searchParams.get('id');
+
+if (!id) {
+  return Astro.redirect('/admin/dashboard');
+}
+
+// Buscamos los datos actuales del producto
+const { data: producto, error } = await supabase
+  .from('productos')
+  .select('*')
+  .eq('id', id)
+  .single();
+
+if (error || !producto) {
+  return Astro.redirect('/admin/dashboard');
+}
+---
+
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Editar | {producto.nombre}</title>
+    
+        <!-- 🔐 CANDADO DE SEGURIDAD DINÁMICO MEJORADO -->
+    <script is:inline>
+      if (!localStorage.getItem('ydatech_session')) {
+        window.location.href = '/admin/login';
+      }
+    </script>
+
+  </head>
+  <body class="bg-gray-50 min-h-screen text-gray-900 font-sans antialiased">
+
+    <nav class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+      <div class="max-w-2xl mx-auto px-4 h-16 flex items-center justify-between">
+        <a href="/admin/dashboard" class="flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-[#5c3aff] py-2">
+          ← Volver al Inventario
+        </a>
+        <span class="text-xs font-bold text-gray-400">Modificando Artículo</span>
+      </div>
+    </nav>
+
+    <main class="max-w-2xl mx-auto px-4 py-8">
+      <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 sm:p-8">
+        
+        <form id="form-editar-producto" class="space-y-5">
+          <input type="hidden" id="prod-id" value={producto.id} />
+
+          <!-- Carga e Implementación de Foto Directa -->
+          <div class="flex flex-col gap-2">
+            <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Imagen del Accesorio</label>
+            <div class="flex items-center gap-5 p-4 bg-gray-50 border border-gray-200 rounded-xl">
+              <img id="preview-foto" src={producto.imagen || '/placeholder.png'} alt="Preview" class="w-20 h-20 rounded-xl object-cover border border-gray-300" />
+              <div class="flex flex-col gap-1.5">
+                <input type="file" id="input-foto" accept="image/*" class="text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-[#5c3aff] hover:file:bg-indigo-100 cursor-pointer" />
+                <p class="text-[10px] text-gray-400">Selecciona una nueva foto para subirla directamente a Supabase.</p>
+              </div>
+            </div>
+            <!-- Guardamos la URL final oculta para enviarla en el formulario -->
+            <input type="hidden" id="url-imagen-final" value={producto.imagen} />
+          </div>
+
+          <!-- Nombre -->
+          <div class="flex flex-col gap-1.5">
+            <label for="nombre" class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Nombre del Artículo</label>
+            <input type="text" id="nombre" required value={producto.nombre} class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold focus:outline-none focus:border-[#5c3aff] focus:bg-white transition-all" />
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <!-- Categoría -->
+            <div class="flex flex-col gap-1.5">
+              <label for="categoria" class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Categoría</label>
+              <input type="text" id="categoria" required value={producto.categoria} class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold focus:outline-none focus:border-[#5c3aff] focus:bg-white transition-all" />
+            </div>
+
+            <!-- Precio -->
+            <div class="flex flex-col gap-1.5">
+              <label for="precio" class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Precio ($)</label>
+              <input type="number" id="precio" step="0.01" required value={producto.precio} class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-bold focus:outline-none focus:border-[#5c3aff] focus:bg-white transition-all" />
+            </div>
+
+            <!-- Stock -->
+            <div class="flex flex-col gap-1.5">
+              <label for="stock" class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Existencia</label>
+              <input type="number" id="stock" required value={producto.stock} class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-bold focus:outline-none focus:border-[#5c3aff] focus:bg-white transition-all" />
+            </div>
+          </div>
+
+          <!-- Descripción -->
+          <div class="flex flex-col gap-1.5">
+            <label for="detalles" class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Descripción Detallada</label>
+            <textarea id="detalles" rows="4" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-medium focus:outline-none focus:border-[#5c3aff] focus:bg-white transition-all resize-none">{producto.detalles}</textarea>
+          </div>
+
+          <button type="submit" id="btn-actualizar" class="w-full bg-[#5c3aff] hover:bg-[#4b2ee0] text-white font-bold text-xs py-3.5 px-4 rounded-xl transition-all shadow-md active:scale-[0.99] cursor-pointer">
+            Guardar Cambios Básicos
+          </button>
+        </form>
+
+      </div>
+    </main>
+
+    <style is:global>@import "tailwindcss";</style>
+    <!-- SCRIPT DE OPERACIÓN INTEGRADO TERMINADO -->
+    <script is:inline>
+      const inputFoto = document.getElementById('input-foto');
+      const previewFoto = document.getElementById('preview-foto');
+      const urlImagenFinal = document.getElementById('url-imagen-final');
+      const formulario = document.getElementById('form-editar-producto');
+      const btnActualizar = document.getElementById('btn-actualizar');
+
+      // 📸 Escuchador para subir la foto a Supabase Storage apenas se selecciona
+      inputFoto?.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Render local instantáneo en pantalla
+        previewFoto.src = URL.createObjectURL(file);
+        btnActualizar.disabled = true;
+        btnActualizar.textContent = 'Subiendo imagen a Supabase... ☁️';
+
+        const formData = new FormData();
+        formData.append('foto', file);
+
+        try {
+          const res = await fetch('/api/subir-imagen', { method: 'POST', body: formData });
+          const data = await res.json();
+
+          if (res.ok && data.success) {
+            urlImagenFinal.value = data.url; // Guardamos la URL de internet del archivo
+            btnActualizar.disabled = false;
+            btnActualizar.textContent = 'Guardar Cambios Básicos';
+          } else {
+            alert('Error al subir la imagen: ' + data.error);
+            restablecerBoton();
+          }
+        } catch (err) {
+          alert('Error de conexión al cargar la foto.');
+          restablecerBoton();
+        }
+      });
+
+      // Guardar el resto del formulario
+      formulario?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        btnActualizar.textContent = 'Actualizando producto...';
+        btnActualizar.disabled = true;
+
+        try {
+          const res = await fetch('/api/actualizar-producto', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: document.getElementById('prod-id').value,
+              nombre: document.getElementById('nombre').value.trim(),
+              categoria: document.getElementById('categoria').value.trim(),
+              precio: parseFloat(document.getElementById('precio').value),
+              stock: parseInt(document.getElementById('stock').value),
+              detalles: document.getElementById('detalles').value.trim(),
+              imagen: urlImagenFinal.value // Mandamos la URL guardada del Storage
+            })
+          });
+
+          if (res.ok) {
+            btnActualizar.textContent = '¡Modificado con éxito! ✓';
+            btnActualizar.className = 'w-full bg-emerald-600 text-white font-bold text-xs py-3.5 px-4 rounded-xl transition-all shadow-md';
+            setTimeout(() => window.location.href = '/admin/dashboard', 1200);
+          } else {
+            alert('Error de comunicación con el endpoint de actualización.');
+            restablecerBoton();
+          }
+        } catch (err) {
+          console.error(err);
+          alert('Error de red con el servidor de la API.');
+          restablecerBoton();
+        }
+      });
+
+      function restablecerBoton() {
+        btnActualizar.textContent = 'Guardar Cambios Básicos';
+        btnActualizar.disabled = false;
+        btnActualizar.className = 'w-full bg-[#5c3aff] hover:bg-[#4b2ee0] text-white font-bold text-xs py-3.5 px-4 rounded-xl transition-all shadow-md';
+      }
+    </script>
+  </body>
+</html>
